@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>個人放貸管理系統</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: "Microsoft JhengHei", sans-serif; }
+        .card { border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; }
+        .table-thead-dark { background-color: #6f42c1; color: white; }
+        .status-badge { padding: 5px 10px; border-radius: 20px; font-size: 0.85em; }
+        .amount { font-family: 'Courier New', monospace; font-weight: bold; text-align: right; }
+    </style>
+</head>
+<body>
+
+<div class="container py-5">
+    <h2 class="mb-4 text-center text-primary">💰 放貸紀錄總覽</h2>
+    
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <input type="text" id="searchInput" class="form-control" placeholder="搜尋借款人或設定人...">
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="recordTable">
+                    <thead class="table-thead-dark">
+                        <tr>
+                            <th>借款人</th>
+                            <th>貸款金額</th>
+                            <th>模式</th>
+                            <th>設定人</th>
+                            <th>利率(年)</th>
+                            <th>月付總額</th>
+                            <th>綁約/違約金</th>
+                            <th>分紅(月)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="8" class="text-center">資料讀取中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 這裡替換成您剛才從 Google Apps Script 得到的 URL
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxpndJiNejUet4wIYLQYs9Sohnw-9RjFhKrQSk9s6D3QHhbLGPPzpxaLVBE9HcSSShSwg/exec';
+
+    async function fetchData() {
+        try {
+            const response = await fetch(API_URL);
+            const data = await response.json();
+            renderTable(data);
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="8" class="text-center text-danger">讀取失敗，請檢查 API 設定</td></tr>';
+        }
+    }
+
+    function renderTable(items) {
+        const tableBody = document.getElementById('tableBody');
+        tableBody.innerHTML = '';
+
+        items.forEach(item => {
+            // 過濾掉空行
+            if(!item['借款人']) return;
+
+            const row = `
+                <tr>
+                    <td><strong>${item['借款人'] || ''}</strong></td>
+                    <td class="amount text-primary">$${Number(item['貸款金額']).toLocaleString()}</td>
+                    <td><span class="badge bg-secondary">${item['還款模式'] || ''}</span></td>
+                    <td>${item['設定人'] || ''}</td>
+                    <td>${(item['利率(年)'] * 100).toFixed(2)}%</td>
+                    <td class="amount text-danger">$${Number(item['月付總額']).toLocaleString()}</td>
+                    <td><small>${item['綁約期限'] || ''}</small></td>
+                    <td class="amount text-success">$${Number(item['分紅金額(月)']).toLocaleString()}</td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        });
+    }
+
+    // 搜尋功能
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        let filter = this.value.toUpperCase();
+        let rows = document.querySelector("#tableBody").rows;
+        for (let i = 0; i < rows.length; i++) {
+            let nameCol = rows[i].cells[0].textContent.toUpperCase();
+            let setterCol = rows[i].cells[3].textContent.toUpperCase();
+            rows[i].style.display = (nameCol.indexOf(filter) > -1 || setterCol.indexOf(filter) > -1) ? "" : "none";
+        }
+    });
+
+    fetchData();
+</script>
+
+</body>
+</html>
