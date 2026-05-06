@@ -2,105 +2,98 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>個人放貸管理系統</title>
+    <title>放貸管理系統</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; font-family: "Microsoft JhengHei", sans-serif; }
-        .card { border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; }
-        .table-thead-dark { background-color: #6f42c1; color: white; }
-        .status-badge { padding: 5px 10px; border-radius: 20px; font-size: 0.85em; }
-        .amount { font-family: 'Courier New', monospace; font-weight: bold; text-align: right; }
+        body { background: #f4f7f6; padding-top: 50px; }
+        .card { border: none; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .btn-primary { background: #6f42c1; border: none; }
+        .table thead { background: #6f42c1; color: white; }
     </style>
 </head>
 <body>
 
-<div class="container py-5">
-    <h2 class="mb-4 text-center text-primary">💰 放貸紀錄總覽</h2>
-    
-    <div class="row mb-3">
-        <div class="col-md-4">
-            <input type="text" id="searchInput" class="form-control" placeholder="搜尋借款人或設定人...">
-        </div>
+<div class="container">
+    <!-- 表單區 -->
+    <div class="card p-4 mb-5">
+        <h3 class="mb-4 text-primary">新增放貸案 (自動產生計畫表)</h3>
+        <form id="loanForm" class="row g-3">
+            <div class="col-md-3"><label class="form-label">借款人</label><input type="text" name="name" class="form-control" required></div>
+            <div class="col-md-3"><label class="form-label">貸款金額</label><input type="number" name="amount" class="form-control" required></div>
+            <div class="col-md-2"><label class="form-label">年利率 (%)</label><input type="number" step="0.01" name="rate" class="form-control" value="16"></div>
+            <div class="col-md-2"><label class="form-label">期數</label><input type="number" name="periods" class="form-control" value="60"></div>
+            <div class="col-md-2"><label class="form-label">還款模式</label>
+                <select name="mode" class="form-select"><option value="只繳息">只繳息</option><option value="本息攤還">本息攤還</option></select>
+            </div>
+            <div class="col-md-3"><label class="form-label">設定人</label><input type="text" name="setter" class="form-control"></div>
+            <div class="col-md-3"><label class="form-label">借款日期</label><input type="date" name="date" class="form-control"></div>
+            <div class="col-md-3"><label class="form-label">綁約期限</label><input type="text" name="contract" class="form-control" placeholder="1年/20%"></div>
+            <div class="col-md-3"><label class="form-label">月付總額 (試算)</label><input type="number" name="monthlyPay" class="form-control"></div>
+            <div class="col-12 text-end"><button type="submit" class="btn btn-primary btn-lg">提交資料並生成計畫表</button></div>
+        </form>
     </div>
 
-    <div class="card">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0" id="recordTable">
-                    <thead class="table-thead-dark">
-                        <tr>
-                            <th>借款人</th>
-                            <th>貸款金額</th>
-                            <th>模式</th>
-                            <th>設定人</th>
-                            <th>利率(年)</th>
-                            <th>月付總額</th>
-                            <th>綁約/違約金</th>
-                            <th>分紅(月)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <tr><td colspan="8" class="text-center">資料讀取中...</td></tr>
-                    </tbody>
-                </table>
-            </div>
+    <!-- 列表區 -->
+    <div class="card p-4">
+        <h3 class="mb-4">現有客戶清單</h3>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>借款人</th><th>金額</th><th>模式</th><th>設定人</th><th>利率</th><th>月付總額</th><th>分紅</th>
+                    </tr>
+                </thead>
+                <tbody id="listBody"><tr><td colspan="7" class="text-center">讀取中...</td></tr></tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <script>
-    // 這裡替換成您剛才從 Google Apps Script 得到的 URL
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxpndJiNejUet4wIYLQYs9Sohnw-9RjFhKrQSk9s6D3QHhbLGPPzpxaLVBE9HcSSShSwg/exec';
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwATHJGrzlYk7vJqSg9G06DI74qbKpDiLm_pcpq4YjV7SG-xQ0CpBhwh1uhCQcawV9Yqw/exec";
 
-    async function fetchData() {
-        try {
-            const response = await fetch(API_URL);
-            const data = await response.json();
-            renderTable(data);
-        } catch (error) {
-            console.error('Error:', error);
-            document.getElementById('tableBody').innerHTML = '<tr><td colspan="8" class="text-center text-danger">讀取失敗，請檢查 API 設定</td></tr>';
-        }
+    // 讀取資料
+    function loadData() {
+        fetch(SCRIPT_URL)
+            .then(res => res.json())
+            .then(data => {
+                let html = '';
+                data.forEach(row => {
+                    html += `<tr>
+                        <td><b>${row['借款人']}</b></td>
+                        <td>$${Number(row['貸款金額']).toLocaleString()}</td>
+                        <td>${row['還款模式']}</td>
+                        <td>${row['設定人']}</td>
+                        <td>${(row['利率(年)']*100).toFixed(2)}%</td>
+                        <td class="text-danger">$${Number(row['月付總額']).toLocaleString()}</td>
+                        <td class="text-success">$${Number(row['分紅金額(月)']).toLocaleString()}</td>
+                    </tr>`;
+                });
+                document.getElementById('listBody').innerHTML = html;
+            });
     }
 
-    function renderTable(items) {
-        const tableBody = document.getElementById('tableBody');
-        tableBody.innerHTML = '';
+    // 提交表單
+    document.getElementById('loanForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = e.target.querySelector('button');
+        btn.disabled = true; btn.innerText = "處理中...";
 
-        items.forEach(item => {
-            // 過濾掉空行
-            if(!item['借款人']) return;
-
-            const row = `
-                <tr>
-                    <td><strong>${item['借款人'] || ''}</strong></td>
-                    <td class="amount text-primary">$${Number(item['貸款金額']).toLocaleString()}</td>
-                    <td><span class="badge bg-secondary">${item['還款模式'] || ''}</span></td>
-                    <td>${item['設定人'] || ''}</td>
-                    <td>${(item['利率(年)'] * 100).toFixed(2)}%</td>
-                    <td class="amount text-danger">$${Number(item['月付總額']).toLocaleString()}</td>
-                    <td><small>${item['綁約期限'] || ''}</small></td>
-                    <td class="amount text-success">$${Number(item['分紅金額(月)']).toLocaleString()}</td>
-                </tr>
-            `;
-            tableBody.innerHTML += row;
-        });
-    }
-
-    // 搜尋功能
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        let filter = this.value.toUpperCase();
-        let rows = document.querySelector("#tableBody").rows;
-        for (let i = 0; i < rows.length; i++) {
-            let nameCol = rows[i].cells[0].textContent.toUpperCase();
-            let setterCol = rows[i].cells[3].textContent.toUpperCase();
-            rows[i].style.display = (nameCol.indexOf(filter) > -1 || setterCol.indexOf(filter) > -1) ? "" : "none";
-        }
+        const formData = Object.fromEntries(new FormData(this).entries());
+        
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(formData)
+        })
+        .then(res => res.json())
+        .then(res => {
+            alert(res.message);
+            location.reload();
+        })
+        .catch(err => alert("發生錯誤，請檢查 GAS 部署權限"));
     });
 
-    fetchData();
+    loadData();
 </script>
-
 </body>
 </html>
