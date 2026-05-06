@@ -13,25 +13,58 @@
 </head>
 <body>
 
-<div class="container">
-    <!-- 表單區 -->
-    <div class="card p-4 mb-5">
-        <h3 class="mb-4 text-primary">新增放貸案 (自動產生計畫表)</h3>
-        <form id="loanForm" class="row g-3">
-            <div class="col-md-3"><label class="form-label">借款人</label><input type="text" name="name" class="form-control" required></div>
-            <div class="col-md-3"><label class="form-label">貸款金額</label><input type="number" name="amount" class="form-control" required></div>
-            <div class="col-md-2"><label class="form-label">年利率 (%)</label><input type="number" step="0.01" name="rate" class="form-control" value="16"></div>
-            <div class="col-md-2"><label class="form-label">期數</label><input type="number" name="periods" class="form-control" value="60"></div>
-            <div class="col-md-2"><label class="form-label">還款模式</label>
-                <select name="mode" class="form-select"><option value="只繳息">只繳息</option><option value="本息攤還">本息攤還</option></select>
-            </div>
-            <div class="col-md-3"><label class="form-label">設定人</label><input type="text" name="setter" class="form-control"></div>
-            <div class="col-md-3"><label class="form-label">借款日期</label><input type="date" name="date" class="form-control"></div>
-            <div class="col-md-3"><label class="form-label">綁約期限</label><input type="text" name="contract" class="form-control" placeholder="1年/20%"></div>
-            <div class="col-md-3"><label class="form-label">月付總額 (試算)</label><input type="number" name="monthlyPay" class="form-control"></div>
-            <div class="col-12 text-end"><button type="submit" class="btn btn-primary btn-lg">提交資料並生成計畫表</button></div>
-        </form>
-    </div>
+<!-- 新增放貸案表單 -->
+<div class="card p-4 mb-5">
+    <h3 class="mb-4 text-primary">新增放貸案 (自動產生計畫表)</h3>
+    <form id="loanForm" class="row g-3">
+        <!-- 第一列 -->
+        <div class="col-md-3">
+            <label class="form-label">借款人</label>
+            <input type="text" name="name" class="form-control" placeholder="例如：魏子涵" required>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">貸款金額</label>
+            <input type="number" name="amount" class="form-control" placeholder="1000000" required>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">還款模式</label>
+            <select name="mode" class="form-select">
+                <option value="只繳息">只繳息</option>
+                <option value="本息攤還">本息攤還</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">設定人</label>
+            <input type="text" name="setter" class="form-control" placeholder="例如：陳瑩達">
+        </div>
+
+        <!-- 第二列：新增的項目 -->
+        <div class="col-md-2">
+            <label class="form-label">股數</label>
+            <input type="number" name="shares" class="form-control" value="5">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">綁約(年)</label>
+            <input type="text" name="contract" class="form-control" placeholder="例如：1年/20%">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">年利率 (%)</label>
+            <input type="number" step="0.01" name="rate" class="form-control" value="16">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">貸款期數(月)</label>
+            <input type="number" name="periods" class="form-control" value="60">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">貸款起始日</label>
+            <input type="date" name="date" class="form-control" required>
+        </div>
+
+        <div class="col-12 text-end">
+            <button type="submit" class="btn btn-primary btn-lg">提交資料並生成計畫表</button>
+        </div>
+    </form>
+</div>
 
     <!-- 列表區 -->
     <div class="card p-4">
