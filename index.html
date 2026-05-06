@@ -2,131 +2,191 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>放貸管理系統</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>放貸管理系統1</title>
+    <!-- 引入 Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background: #f4f7f6; padding-top: 50px; }
-        .card { border: none; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .btn-primary { background: #6f42c1; border: none; }
-        .table thead { background: #6f42c1; color: white; }
+        body { background-color: #f4f7f6; font-family: "Microsoft JhengHei", sans-serif; }
+        .card { border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .form-label { font-weight: bold; color: #495057; }
+        .btn-primary { border-radius: 8px; padding: 10px 25px; transition: all 0.3s; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(13, 110, 253, 0.4); }
+        #loading { display: none; }
     </style>
 </head>
 <body>
 
-<!-- 新增放貸案表單 -->
-<div class="card p-4 mb-5">
-    <h3 class="mb-4 text-primary">新增放貸案 (自動產生計畫表)</h3>
-    <form id="loanForm" class="row g-3">
-        <!-- 第一列 -->
-        <div class="col-md-3">
-            <label class="form-label">借款人</label>
-            <input type="text" name="name" class="form-control" placeholder="例如：魏子涵" required>
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">貸款金額</label>
-            <input type="number" name="amount" class="form-control" placeholder="1000000" required>
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">還款模式</label>
-            <select name="mode" class="form-select">
-                <option value="只繳息">只繳息</option>
-                <option value="本息攤還">本息攤還</option>
-            </select>
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">設定人</label>
-            <input type="text" name="setter" class="form-control" placeholder="例如：陳瑩達">
-        </div>
+<div class="container py-5">
+    <!-- 新增放貸案表單 -->
+    <div class="card p-4 mb-5">
+        <h3 class="mb-4 text-primary">新增放貸案 (自動產生計畫表)</h3>
+        <form id="loanForm" class="row g-3">
+            <!-- 第一排 -->
+            <div class="col-md-3">
+                <label class="form-label">借款人</label>
+                <input type="text" name="name" class="form-control" placeholder="魏子涵" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">貸款金額</label>
+                <input type="number" name="amount" class="form-control" placeholder="1000000" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">還款模式</label>
+                <select name="mode" class="form-select">
+                    <option value="只繳息">只繳息</option>
+                    <option value="本息攤還">本息攤還</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">設定人</label>
+                <input type="text" name="setter" class="form-control" placeholder="陳瑩達" required>
+            </div>
 
-        <!-- 第二列：新增的項目 -->
-        <div class="col-md-2">
-            <label class="form-label">股數</label>
-            <input type="number" name="shares" class="form-control" value="5">
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">綁約(年)</label>
-            <input type="text" name="contract" class="form-control" placeholder="例如：1年/20%">
-        </div>
-        <div class="col-md-2">
-            <label class="form-label">年利率 (%)</label>
-            <input type="number" step="0.01" name="rate" class="form-control" value="16">
-        </div>
-        <div class="col-md-2">
-            <label class="form-label">貸款期數(月)</label>
-            <input type="number" name="periods" class="form-control" value="60">
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">貸款起始日</label>
-            <input type="date" name="date" class="form-control" required>
-        </div>
+            <!-- 第二排 -->
+            <div class="col-md-2">
+                <label class="form-label">股數</label>
+                <input type="number" name="shares" class="form-control" value="5">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">綁約條件</label>
+                <input type="text" name="contract" class="form-control" placeholder="1年/20%">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">年利率 (%)</label>
+                <input type="number" step="0.01" name="rate" class="form-control" value="16">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">期數 (月)</label>
+                <input type="number" name="periods" class="form-control" value="60">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">貸款起始日</label>
+                <input type="date" name="date" id="currentDate" class="form-control" required>
+            </div>
 
-        <div class="col-12 text-end">
-            <button type="submit" class="btn btn-primary btn-lg">提交資料並生成計畫表</button>
-        </div>
-    </form>
-</div>
+            <div class="col-12 text-end mt-4">
+                <button type="submit" id="submitBtn" class="btn btn-primary btn-lg">
+                    <span id="btnText">提交資料並生成分頁</span>
+                    <span id="loading" class="spinner-border spinner-border-sm" role="status"></span>
+                </button>
+            </div>
+        </form>
+    </div>
 
-    <!-- 列表區 -->
+    <!-- 現有客戶列表區 -->
     <div class="card p-4">
-        <h3 class="mb-4">現有客戶清單</h3>
+        <h3 class="mb-4 text-secondary">現有客戶清單 (同步自試算表)</h3>
         <div class="table-responsive">
             <table class="table table-hover">
-                <thead>
+                <thead class="table-light">
                     <tr>
-                        <th>借款人</th><th>金額</th><th>模式</th><th>設定人</th><th>利率</th><th>月付總額</th><th>分紅</th>
+                        <th>借款人</th>
+                        <th>金額</th>
+                        <th>模式</th>
+                        <th>設定人</th>
+                        <th>利率</th>
+                        <th>分紅</th>
                     </tr>
                 </thead>
-                <tbody id="listBody"><tr><td colspan="7" class="text-center">讀取中...</td></tr></tbody>
+                <tbody id="customerTable">
+                    <tr><td colspan="6" class="text-center">讀取中...</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby9t5S76oYh6RFxjmLRhK8SqgrkoBMj14mseTjS1lfN9FvL-tAh46jeIrjy8zkWCf97Qw/exec";
+    // 請替換成您最新的 GAS 部署網址
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby2nXjtIwhVTkFWwH9LNAae0HQFnlpVHTvcBxDh7Ntlz31pBkwzLBAwsxuBlm0vNsVhHg/exec";
 
-    // 讀取資料
-    function loadData() {
-        fetch(SCRIPT_URL)
-            .then(res => res.json())
-            .then(data => {
-                let html = '';
-                data.forEach(row => {
-                    html += `<tr>
-                        <td><b>${row['借款人']}</b></td>
-                        <td>$${Number(row['貸款金額']).toLocaleString()}</td>
-                        <td>${row['還款模式']}</td>
-                        <td>${row['設定人']}</td>
-                        <td>${(row['利率(年)']*100).toFixed(2)}%</td>
-                        <td class="text-danger">$${Number(row['月付總額']).toLocaleString()}</td>
-                        <td class="text-success">$${Number(row['分紅金額(月)']).toLocaleString()}</td>
-                    </tr>`;
-                });
-                document.getElementById('listBody').innerHTML = html;
-            });
-    }
+    // 設定日期預設值為今天
+    document.getElementById('currentDate').valueAsDate = new Date();
 
-    // 提交表單
+    // 1. 提交表單
     document.getElementById('loanForm').addEventListener('submit', function(e) {
         e.preventDefault();
-        const btn = e.target.querySelector('button');
-        btn.disabled = true; btn.innerText = "處理中...";
-
-        const formData = Object.fromEntries(new FormData(this).entries());
         
+        const btn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+        const btnText = document.getElementById('btnText');
+
+        // 鎖定按鈕防止重複點擊
+        btn.disabled = true;
+        loading.style.display = 'inline-block';
+        btnText.innerText = '處理中...';
+
+        const formData = {
+            name: this.name.value,
+            amount: this.amount.value,
+            mode: this.mode.value,
+            setter: this.setter.value,
+            shares: this.shares.value,
+            contract: this.contract.value,
+            rate: this.rate.value,
+            periods: this.periods.value,
+            date: this.date.value
+        };
+
         fetch(SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify(formData)
         })
         .then(res => res.json())
         .then(res => {
-            alert(res.message);
-            location.reload();
+            if (res.status === "success") {
+                alert("✅ " + res.message);
+                location.reload(); // 成功後重新整理
+            } else {
+                alert("❌ 發生錯誤：" + res.message);
+                btn.disabled = false;
+                loading.style.display = 'none';
+                btnText.innerText = '提交資料並生成分頁';
+            }
         })
-        .catch(err => alert("發生錯誤，請檢查 GAS 部署權限"));
+        .catch(err => {
+            alert("❌ 網路請求失敗，請檢查 GAS 網址與 CORS 設定");
+            console.error(err);
+            btn.disabled = false;
+            loading.style.display = 'none';
+        });
     });
 
-    loadData();
+    // 2. 讀取現有清單 (GET)
+    function loadData() {
+        fetch(SCRIPT_URL)
+        .then(res => res.json())
+        .then(data => {
+            const tableBody = document.getElementById('customerTable');
+            tableBody.innerHTML = '';
+            
+            if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center">目前尚無客戶資料</td></tr>';
+                return;
+            }
+
+            data.forEach(item => {
+                const row = `<tr>
+                    <td><strong>${item['借款人'] || ''}</strong></td>
+                    <td>${Number(item['貸款金額']).toLocaleString() || '0'}</td>
+                    <td>${item['還款模式'] || ''}</td>
+                    <td>${item['設定人'] || ''}</td>
+                    <td>${(item['利率(年)'] * 100).toFixed(2)}%</td>
+                    <td>${Number(item['分紅金額(月)'] || 0).toLocaleString()}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        })
+        .catch(err => {
+            console.error("讀取清單失敗:", err);
+            document.getElementById('customerTable').innerHTML = '<tr><td colspan="6" class="text-center text-danger">讀取失敗，請確認 API 網址</td></tr>';
+        });
+    }
+
+    // 頁面開啟時加載數據
+    window.onload = loadData;
 </script>
+
 </body>
 </html>
